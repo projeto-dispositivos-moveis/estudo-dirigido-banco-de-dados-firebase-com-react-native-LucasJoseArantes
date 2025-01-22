@@ -6,6 +6,7 @@ export default function App() {
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
+  const [editingUser, setEditingUser] = useState(null);
   const firestoreURL = 'https://firestore.googleapis.com/v1/projects/reactive-native-2bbf3/databases/(default)/documents/usuarios'
 
   const fetchData = async () => {
@@ -79,9 +80,38 @@ export default function App() {
     }
   };
 
+  const editUser = async () => {
+    try {
+      const updatedData = {
+        fields: {
+          nome: { stringValue: nome },
+          email: { stringValue: email },
+        },
+      };
+      const response = await fetch(`${firestoreURL}/${editingUser.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedData),
+      });
+
+      if (response.ok) {
+        setMessage('Usuário atualizado com sucesso!');
+        setEditingUser(null);
+        setNome('');
+        setEmail('');
+        fetchData();
+      } else {
+        setMessage('Erro ao atualizar usuário.');
+      }
+    } catch (err) {
+      setMessage('Erro ao atualizar usuário.');
+      console.error(err);
+    }
+  };
+
   return (
     <View style={styles.container}>
-    <Text style={styles.title}>Adicionar Usuário</Text>
+      <Text style={styles.title}>Adicionar Usuário</Text>
       <TextInput
         style={styles.input}
         placeholder="Nome"
@@ -96,25 +126,48 @@ export default function App() {
       />
       <Button title="Salvar" onPress={saveData} />
       {message && <Text style={styles.message}>{message}</Text>}
+
+      {editingUser && (
+        <View>
+          <TextInput
+            style={styles.input}
+            placeholder="Nome"
+            value={nome}
+            onChangeText={setNome}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Email"
+            value={email}
+            onChangeText={setEmail}
+          />
+          <Button title="Salvar Alterações" onPress={editUser} />
+        </View>
+      )}
+
       <Text style={styles.title}>Lista de Usuários</Text>
       {error && <Text style={styles.error}>{error}</Text>}
       {usuarios.length > 0 ? (
         usuarios.map((usuario) => (
           <View key={usuario.id} style={styles.userContainer}>
-            <Text>{usuario.nome} - {usuario.email}</Text>
-            <Button title="Excluir" onPress={() => deleteUser(usuario.id)} />
-          </View>
+              <Text>{usuario.nome} - {usuario.email}</Text>
+              <Button title="Editar" onPress={() => {
+                setEditingUser(usuario);
+                setNome(usuario.nome);
+                setEmail(usuario.email);
+              }} />
+            </View>
         ))
       ) : (
         <Text>Nenhum usuário encontrado.</Text>
       )}
-      
+
     </View>
   );
 }
 const styles = StyleSheet.create({
   container: {
-    marginTop:40,
+    marginTop: 40,
     flex: 1,
     padding: 16,
   },
@@ -128,6 +181,6 @@ const styles = StyleSheet.create({
 
   title: { fontSize: 18, fontWeight: 'bold', marginBottom: 16 },
   error: { color: 'red', marginBottom: 16 },
-  input:{ borderWidth:1, padding:4, marginBottom:8, borderRadius:4},
-  message:{ color:'red', fontSize: 8, textAlign:'center',  padding:4, marginBottom:8}
+  input: { borderWidth: 1, padding: 4, marginBottom: 8, borderRadius: 4 },
+  message: { color: 'red', fontSize: 8, textAlign: 'center', padding: 4, marginBottom: 8 }
 });
