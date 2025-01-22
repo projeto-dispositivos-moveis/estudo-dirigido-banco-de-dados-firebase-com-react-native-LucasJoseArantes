@@ -6,7 +6,8 @@ export default function App() {
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
-  const firestoreURL = 'https://firestore.googleapis.com/v1/projects/teste-6ef30/databases/(default)/documents/pessoas'
+  const firestoreURL = 'https://firestore.googleapis.com/v1/projects/reactive-native-2bbf3/databases/(default)/documents/usuarios'
+
   const fetchData = async () => {
     try {
       const response = await fetch(firestoreURL);
@@ -60,6 +61,24 @@ export default function App() {
     }
     fetchData()
   };
+
+  const deleteUser = async (id) => {
+    try {
+      const response = await fetch(`${firestoreURL}/${id}`, {
+        method: 'DELETE',
+      });
+      if (response.ok) {
+        setMessage('Usuário excluído com sucesso!');
+        fetchData();
+      } else {
+        setMessage('Erro ao excluir usuário.');
+      }
+    } catch (err) {
+      setMessage('Erro ao excluir usuário.');
+      console.error(err);
+    }
+  };
+
   return (
     <View style={styles.container}>
     <Text style={styles.title}>Adicionar Usuário</Text>
@@ -81,9 +100,10 @@ export default function App() {
       {error && <Text style={styles.error}>{error}</Text>}
       {usuarios.length > 0 ? (
         usuarios.map((usuario) => (
-          <Text key={usuario.id}>
-            {usuario.nome} - {usuario.email}
-          </Text>
+          <View key={usuario.id} style={styles.userContainer}>
+            <Text>{usuario.nome} - {usuario.email}</Text>
+            <Button title="Excluir" onPress={() => deleteUser(usuario.id)} />
+          </View>
         ))
       ) : (
         <Text>Nenhum usuário encontrado.</Text>
@@ -98,6 +118,14 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
   },
+
+  userContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+
   title: { fontSize: 18, fontWeight: 'bold', marginBottom: 16 },
   error: { color: 'red', marginBottom: 16 },
   input:{ borderWidth:1, padding:4, marginBottom:8, borderRadius:4},
